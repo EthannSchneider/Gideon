@@ -3,8 +3,8 @@
 -----------------------------
  @Name Gideon
  @Author Ethann Schneider
- @Version 2.1.1
- @Date 24.03.22
+ @Version 2.2.0
+ @Date 01.04.22
 -----------------------------
 '''
 
@@ -310,7 +310,7 @@ async def clear(message,commands):
 async def quit(message,commands):
     await message.channel.send("bye, bye")
     await client.logout()
-    await client.close() 
+    await client.close()
 
 '''
 @Name Salut
@@ -375,6 +375,16 @@ async def hentai(message,commands):
 async def sel(message,commands):
     await message.channel.send(file=discord.File('/home/ethann/gideon/image/salt.jpg'))
 
+'''
+@Name Disquette
+@Description Send a disquette
+@args1 message Message that was sent by user
+@args2 commands Commands that was sent by user
+@return Null
+'''
+async def disquette(message,commands):
+    await message.channel.send(file=discord.File('/home/ethann/gideon/image/disquette.png'))
+
 rootoptions = { # Root commands
         'quit' : {'cmd': help, 'description': "Pour éteinde le bot", 'hide':False , "nsfw": False},
         'clear' : {'cmd': clear, 'description': "Pour clear tout les messages d'un salon textuelle", 'hide':False , "nsfw": False},
@@ -392,7 +402,8 @@ options = { # User Commands
         "pi": {"cmd": pi, "description": "tell you pi Number", "hide": False, "nsfw": False},
         "joke": {"cmd": joke, "description": "tell you a joke", "hide": False, "nsfw": False},
         "hentai": {"cmd": hentai, "description": "Give you hentai picture", "hide": True, "nsfw": True},
-        "sel": {"cmd": sel, "description": "Give you salt picture", "hide": False, "nsfw": False}
+        "sel": {"cmd": sel, "description": "Give you salt picture", "hide": False, "nsfw": False},
+        "disquette": {"cmd": disquette, "description": "Give you disquette", "hide": False, "nsfw": False}
 }
 
 root = { # Root people
