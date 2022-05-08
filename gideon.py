@@ -24,6 +24,7 @@ import re
 from urllib.parse import urlparse, parse_qs
 from contextlib import suppress
 from discord.ext import tasks
+import json
 
 lock = {}
 
@@ -46,6 +47,24 @@ queue = {}
 blague = []
 
 excuse = []
+
+'''
+@Name load Perms
+@Description To load permission from file
+@return json of perms
+'''
+def permsLoad():
+    with open("/home/ethann/gideon/perms/option.json", "r") as jsonFile:
+        return json.load(jsonFile, object_hook = None)
+
+'''
+@Name save Perms
+@Description To save permission to file
+@return Null
+'''
+def permsSave():
+    with open("/home/ethann/gideon/perms/option.json", "w") as jsonFile:
+        jsonFile.write(json.dumps(options))
 
 # Music function
 
@@ -410,19 +429,20 @@ rootoptions = { # Root commands
         'lock' : {'cmd': actLock, 'description': "Activer la lock pour le non root a l'accés du bot au salon musique", 'hide':True, "nsfw": False}
 }
 
-options = { # User Commands
-        "help":{"cmd": "help(message, commands)", "description":"Simple Help page", "hide":False, "nsfw": False},
-        "salut":{"cmd": "SendMessage(message, commands, 'Hello there')", "description":"Say hello", "hide":False, "nsfw": False},
-        "pileFace":{"cmd": "SendMessage(message, commands, '', '/home/ethann/gideon/image/'+['face','pile'][random.randint(0,1)]+'.png')", "description":"Simple Pile Ou Face", "hide":False, "nsfw": False},
-        "play": {"cmd": "play(message, commands)", "description": "play Music", "hide": False, "nsfw": False},
-        "skip": {"cmd": "skip(message, commands)", "description": "skip Music", "hide": False, "nsfw": False},
-        "stop": {"cmd": "stop(message, commands)", "description": "stop Music", "hide": False, "nsfw": False},
-        "pi": {"cmd": "SendMessage(message, commands, 'π = **3.1415926535897932384626433832795028841971693993751058209749445923**')", "description": "tell you pi Number", "hide": False, "nsfw": False},
-        "joke": {"cmd": "SendMessage(message, commands, getJoke())", "description": "tell you a joke", "hide": False, "nsfw": False},
-        "hentai": {"cmd": "hentai(message, commands)", "description": "Give you hentai picture", "hide": True, "nsfw": True},
-        "sel": {"cmd": "SendMessage(message, commands, '', '/home/ethann/gideon/image/salt.jpg')", "description": "Give you salt picture", "hide": False, "nsfw": False},
-        "disquette": {"cmd": "SendMessage(message, commands, '', '/home/ethann/gideon/image/disquette.png')", "description": "Give you disquette", "hide": False, "nsfw": False}
-}
+options = permsLoad(); # User Commands
+# {
+#         "help":{"cmd": "help(message, commands)", "description":"Simple Help page", "hide":False, "nsfw": False},
+#         "salut":{"cmd": "SendMessage(message, commands, 'Hello there')", "description":"Say hello", "hide":False, "nsfw": False},
+#         "pileFace":{"cmd": "SendMessage(message, commands, '', '/home/ethann/gideon/image/'+['face','pile'][random.randint(0,1)]+'.png')", "description":"Simple Pile Ou Face", "hide":False, "nsfw": False},
+#         "play": {"cmd": "play(message, commands)", "description": "play Music", "hide": False, "nsfw": False},
+#         "skip": {"cmd": "skip(message, commands)", "description": "skip Music", "hide": False, "nsfw": False},
+#         "stop": {"cmd": "stop(message, commands)", "description": "stop Music", "hide": False, "nsfw": False},
+#         "pi": {"cmd": "SendMessage(message, commands, 'π = **3.1415926535897932384626433832795028841971693993751058209749445923**')", "description": "tell you pi Number", "hide": False, "nsfw": False},
+#         "joke": {"cmd": "SendMessage(message, commands, getJoke())", "description": "tell you a joke", "hide": False, "nsfw": False},
+#         "hentai": {"cmd": "hentai(message, commands)", "description": "Give you hentai picture", "hide": True, "nsfw": True},
+#         "sel": {"cmd": "SendMessage(message, commands, '', '/home/ethann/gideon/image/salt.jpg')", "description": "Give you salt picture", "hide": False, "nsfw": False},
+#         "disquette": {"cmd": "SendMessage(message, commands, '', '/home/ethann/gideon/image/disquette.png')", "description": "Give you disquette", "hide": False, "nsfw": False}
+# }
 
 root = { # Root people
     386200134628671492 : { 'name' : "Ethann8" }
@@ -594,6 +614,7 @@ async def on_ready():
     print(client.user)
     print(client.user.id)
     print('------')
+    options = permsLoad()
     LoopMusic.start()
     #await client.get_user(386200134628671492).send("Bot Allumer")
 
