@@ -3,8 +3,8 @@
 -----------------------------
  @Name Gideon
  @Author Ethann Schneider
- @Version 2.2.0
- @Date 01.04.22
+ @Version 2.3.0
+ @Date 08.04.22
 -----------------------------
 '''
 
@@ -28,6 +28,7 @@ from discord.ext import tasks
 lock = {}
 
 global TOKEN
+global queue
 
 TOKEN = None
 with open("/home/ethann/gideon/key.txt", "r") as key:
@@ -39,6 +40,8 @@ intents.members = True
 client = discord.Client(intents=intents)
 
 vc = {}
+
+queue = {}
 
 blague = []
 
@@ -57,13 +60,42 @@ def joinChannel(message):
 
 '''
 @Name play Music
-@Description play Music with path
+@Description play Music with path or add it to the queue
 @args1 path Path To File
 @args2 voc Vocal where to play
-@return Null
+@args3 id server id
+@return text to send in chat
 '''
-def playMusic(path, voc):
-    voc.play(discord.FFmpegPCMAudio(path))
+def playMusic(path, voc, id):
+    if not voc.is_playing():
+        voc.play(discord.FFmpegPCMAudio(path))
+
+        return "playing"
+    else:
+        if id not in queue:
+            queue[id] = []
+
+        queue[id].insert(0, path)
+        return "Added to queue"
+
+'''
+@Name next Music
+@Description play next music in queue
+@args1 voc Vocal where to play
+@args2 id server id
+@return text to send in chat
+'''
+def nextMusic(voc, id):
+    if id not in queue:
+        queue[id] = []
+
+    if queue[id]:
+        if voc.is_playing():
+            voc.stop()
+
+        return playMusic(queue[id].pop(), voc, id)
+    else:
+        return "Queue is empty"
 
 '''
 @Name get youtube id
@@ -123,7 +155,7 @@ def youtubeDwl(ytb):
 @return Null
 '''
 async def play(message,commands):
-    global vc
+    global vc, queue
     if not isinstance(message.channel, discord.channel.DMChannel):
         if message.guild.id not in lock:
             lock[message.guild.id] = False
@@ -142,9 +174,7 @@ async def play(message,commands):
                 fileName = "/home/ethann/gideon/music/"+get_yt_id(commands[0][2])+".mp3"
                 if not os.path.exists(fileName):
                     youtubeDwl(commands[0][2])
-                playMusic(fileName, vc[message.guild.id])
-
-                await message.channel.send("playing " + commands[0][2])
+                await message.channel.send(playMusic(fileName, vc[message.guild.id], message.guild.id))
             except Exception as e:
                 await message.channel.send("Erreur technique vérifier que se soit une video téléchargeable ou que vous soyez dans un salon vocaux")
                 print(e)
@@ -159,7 +189,7 @@ async def play(message,commands):
 @return Null
 '''
 async def stop(message,commands):
-    global vc
+    global vc, queue
 
     if not isinstance(message.channel, discord.channel.DMChannel):
         if message.guild.id not in lock:
@@ -174,10 +204,42 @@ async def stop(message,commands):
             await vc[message.guild.id].disconnect()
 
             vc[message.guild.id] = None
+            queue[message.guild.id] = []
 
             await message.channel.send("Stopping")
         else:
             await message.channel.send("Nothing to Stop")
+
+'''
+@Name Skip
+@Description Command to Skip current music with one in the queue
+@args1 message message that was sent by user
+@args2 commands commands that was sent by user
+@return Null
+'''
+async def skip(message,commands):
+    global vc, queue
+    if not isinstance(message.channel, discord.channel.DMChannel):
+        if message.guild.id not in lock:
+            lock[message.guild.id] = False
+
+        if message.guild.id not in vc:
+            vc[message.guild.id] = None
+
+        if lock[message.guild.id] and message.author.id not in root:
+            await message.channel.send("non Désolé, "+getExcuse())
+            return
+
+        try:
+            if vc[message.guild.id] == None:
+                await message.channel.send("non Désolé, "+getExcuse())
+                return
+
+            await message.channel.send(nextMusic(vc[message.guild.id], message.guild.id))
+        except Exception as e:
+            await message.channel.send("Erreur technique vérifier que se soit une video téléchargeable ou que vous soyez dans un salon vocaux")
+            print(e)
+
 
 '''
 @Name active Lock
@@ -254,16 +316,6 @@ async def help(message,commands):
     await message.channel.send(embed=embed)
 
 '''
-@Name pile ou Face
-@Description Send a pile ou face
-@args1 message Message that was sent by user
-@args2 commands Commands that was sent by user
-@return Null
-'''
-async def pileFace(message,commands):
-    await message.channel.send(file=discord.File('/home/ethann/gideon/image/'+['face','pile'][random.randint(0,1)]+'.png'))
-
-'''
 @Name Ngrok
 @Description command to start and stop Ngrok instance
 @args1 message Message that was sent by user
@@ -313,26 +365,6 @@ async def quit(message,commands):
     await client.close()
 
 '''
-@Name Salut
-@Description Just sending a "Hello there" ;)
-@args1 message Message that was sent by user
-@args2 commands Commands that was sent by user
-@return Null
-'''
-async def salut(message, commands):
-    await message.channel.send("Hello there")
-
-'''
-@Name pi
-@Description Send pi number
-@args1 message Message that was sent by user
-@args2 commands Commands that was sent by user
-@return Null
-'''
-async def pi(message, commands):
-    await message.channel.send("π = **3.1415926535897932384626433832795028841971693993751058209749445923**")
-
-'''
 @Name Wake on lan
 @Description Start EthannGaming pc
 @args1 message Message that was sent by user
@@ -342,16 +374,6 @@ async def pi(message, commands):
 async def wol(message, commands):
     os.popen("wakeonlan 34:97:F6:25:AC:E4").read()
     await message.channel.send("VERY GOOD MY FRIEND YOU START YOUR COMPUTER BY USING DISCORD ARE YOU HAPPY !!!!!")
-
-'''
-@Name Joke
-@Description Send a joke
-@args1 message Message that was sent by user
-@args2 commands Commands that was sent by user
-@return Null
-'''
-async def joke(message, commands):
-    await message.channel.send(getJoke())
 
 '''
 @Name Hentai
@@ -366,24 +388,19 @@ async def hentai(message,commands):
     await message.channel.send(file=discord.File(dir+list[random.randint(0,len(list))-1]))
 
 '''
-@Name Sel
-@Description Send a salt picture
+@Name SendMessage
+@Description Send a message with or without a file
 @args1 message Message that was sent by user
 @args2 commands Commands that was sent by user
+@args3 messages Message to send
+@args4 files=Null File to send
 @return Null
 '''
-async def sel(message,commands):
-    await message.channel.send(file=discord.File('/home/ethann/gideon/image/salt.jpg'))
-
-'''
-@Name Disquette
-@Description Send a disquette
-@args1 message Message that was sent by user
-@args2 commands Commands that was sent by user
-@return Null
-'''
-async def disquette(message,commands):
-    await message.channel.send(file=discord.File('/home/ethann/gideon/image/disquette.png'))
+async def SendMessage(message, commands, messages, files=None):
+    if files == None:
+        await message.channel.send(messages)
+    else:
+        await message.channel.send(messages, file=discord.File(files))
 
 rootoptions = { # Root commands
         'quit' : {'cmd': help, 'description': "Pour éteinde le bot", 'hide':False , "nsfw": False},
@@ -394,16 +411,17 @@ rootoptions = { # Root commands
 }
 
 options = { # User Commands
-        "help":{"cmd": help, "description":"Simple Help page", "hide":False, "nsfw": False},
-        "salut":{"cmd": salut, "description":"Say hello", "hide":False, "nsfw": False},
-        "pileFace":{"cmd": pileFace, "description":"Simple Pile Ou Face", "hide":False, "nsfw": False},
-        "play": {"cmd": play, "description": "play Music", "hide": False, "nsfw": False},
-        "stop": {"cmd": stop, "description": "stop Music", "hide": False, "nsfw": False},
-        "pi": {"cmd": pi, "description": "tell you pi Number", "hide": False, "nsfw": False},
-        "joke": {"cmd": joke, "description": "tell you a joke", "hide": False, "nsfw": False},
-        "hentai": {"cmd": hentai, "description": "Give you hentai picture", "hide": True, "nsfw": True},
-        "sel": {"cmd": sel, "description": "Give you salt picture", "hide": False, "nsfw": False},
-        "disquette": {"cmd": disquette, "description": "Give you disquette", "hide": False, "nsfw": False}
+        "help":{"cmd": "help(message, commands)", "description":"Simple Help page", "hide":False, "nsfw": False},
+        "salut":{"cmd": "SendMessage(message, commands, 'Hello there')", "description":"Say hello", "hide":False, "nsfw": False},
+        "pileFace":{"cmd": "SendMessage(message, commands, '', '/home/ethann/gideon/image/'+['face','pile'][random.randint(0,1)]+'.png')", "description":"Simple Pile Ou Face", "hide":False, "nsfw": False},
+        "play": {"cmd": "play(message, commands)", "description": "play Music", "hide": False, "nsfw": False},
+        "skip": {"cmd": "skip(message, commands)", "description": "skip Music", "hide": False, "nsfw": False},
+        "stop": {"cmd": "stop(message, commands)", "description": "stop Music", "hide": False, "nsfw": False},
+        "pi": {"cmd": "SendMessage(message, commands, 'π = **3.1415926535897932384626433832795028841971693993751058209749445923**')", "description": "tell you pi Number", "hide": False, "nsfw": False},
+        "joke": {"cmd": "SendMessage(message, commands, getJoke())", "description": "tell you a joke", "hide": False, "nsfw": False},
+        "hentai": {"cmd": "hentai(message, commands)", "description": "Give you hentai picture", "hide": True, "nsfw": True},
+        "sel": {"cmd": "SendMessage(message, commands, '', '/home/ethann/gideon/image/salt.jpg')", "description": "Give you salt picture", "hide": False, "nsfw": False},
+        "disquette": {"cmd": "SendMessage(message, commands, '', '/home/ethann/gideon/image/disquette.png')", "description": "Give you disquette", "hide": False, "nsfw": False}
 }
 
 root = { # Root people
@@ -418,14 +436,18 @@ root = { # Root people
 '''
 @tasks.loop(seconds = 1)
 async def LoopMusic():
-    global vc
+    global vc, queue
     for i in vc:
         if vc[i] != None:
             if not vc[i].is_playing():
-                vc[i].stop()
-                await vc[i].disconnect()
+                if queue[i]:
+                    nextMusic(vc[i], i)
+                else:
+                    vc[i].stop()
+                    await vc[i].disconnect()
 
-                vc[i] = None
+                    vc[i] = None
+                    queue[i] = []
 
 '''
 @event
@@ -464,9 +486,9 @@ async def on_message(message):
                 if isinstance(message.channel, discord.channel.DMChannel):
                     await message.channel.send("non Désolé, "+getExcuse())
                 elif message.channel.is_nsfw():
-                    await options[commands[0][0]]['cmd'](message,commands)
+                    await eval(options[commands[0][0]]['cmd'])
             else:
-                await options[commands[0][0]]['cmd'](message,commands)
+                await eval(options[commands[0][0]]['cmd'])
 
     elif 'hello' in message.content.lower() and 'there' in message.content.lower():
         await message.channel.send("GENERAL "+message.author.name+" !")
