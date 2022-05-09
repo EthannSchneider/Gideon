@@ -384,6 +384,18 @@ async def quit(message,commands):
     await client.close()
 
 '''
+@Name reload
+@Description Made bot reload command
+@args1 message Message that was sent by user
+@args2 commands Commands that was sent by user
+@return Null
+'''
+async def reload(message,commands):
+    global options
+    options = permsLoad()
+    await message.channel.send("reloaded")
+
+'''
 @Name Wake on lan
 @Description Start EthannGaming pc
 @args1 message Message that was sent by user
@@ -393,18 +405,6 @@ async def quit(message,commands):
 async def wol(message, commands):
     os.popen("wakeonlan 34:97:F6:25:AC:E4").read()
     await message.channel.send("VERY GOOD MY FRIEND YOU START YOUR COMPUTER BY USING DISCORD ARE YOU HAPPY !!!!!")
-
-'''
-@Name Hentai
-@Description Send a hentai picture with a image directory
-@args1 message Message that was sent by user
-@args2 commands Commands that was sent by user
-@return Null
-'''
-async def hentai(message,commands):
-    dir = '/home/ethann/gideon/image/hentai/'
-    list = os.listdir(dir)
-    await message.channel.send(file=discord.File(dir+list[random.randint(0,len(list))-1]))
 
 '''
 @Name SendMessage
@@ -418,12 +418,16 @@ async def hentai(message,commands):
 async def SendMessage(message, commands, messages, files=None):
     if files == None:
         await message.channel.send(messages)
+    if os.path.isdir(files):
+        list = os.listdir(files)
+        await message.channel.send(file=discord.File(files+"/"+list[random.randint(0,len(list))-1]))
     else:
         await message.channel.send(messages, file=discord.File(files))
 
 rootoptions = { # Root commands
         'quit' : {'cmd': help, 'description': "Pour éteinde le bot", 'hide':False , "nsfw": False},
         'clear' : {'cmd': clear, 'description': "Pour clear tout les messages d'un salon textuelle", 'hide':False , "nsfw": False},
+        'reload' : {'cmd': reload, 'description': "Pour reload les commands du bot", 'hide':False , "nsfw": False},
         'ngrok' : {'cmd': funcngrok, 'description': "Demarrer un Client Ngrok !", 'hide':True, "nsfw": False },
         'wol' : {'cmd': wol, 'description': "Demarrer EthannGaming avec un wake on lan", 'hide':True, "nsfw": False},
         'lock' : {'cmd': actLock, 'description': "Activer la lock pour le non root a l'accés du bot au salon musique", 'hide':True, "nsfw": False}
@@ -431,17 +435,17 @@ rootoptions = { # Root commands
 
 options = permsLoad(); # User Commands
 # {
-#         "help":{"cmd": "help(message, commands)", "description":"Simple Help page", "hide":False, "nsfw": False},
-#         "salut":{"cmd": "SendMessage(message, commands, 'Hello there')", "description":"Say hello", "hide":False, "nsfw": False},
-#         "pileFace":{"cmd": "SendMessage(message, commands, '', '/home/ethann/gideon/image/'+['face','pile'][random.randint(0,1)]+'.png')", "description":"Simple Pile Ou Face", "hide":False, "nsfw": False},
-#         "play": {"cmd": "play(message, commands)", "description": "play Music", "hide": False, "nsfw": False},
-#         "skip": {"cmd": "skip(message, commands)", "description": "skip Music", "hide": False, "nsfw": False},
-#         "stop": {"cmd": "stop(message, commands)", "description": "stop Music", "hide": False, "nsfw": False},
-#         "pi": {"cmd": "SendMessage(message, commands, 'π = **3.1415926535897932384626433832795028841971693993751058209749445923**')", "description": "tell you pi Number", "hide": False, "nsfw": False},
-#         "joke": {"cmd": "SendMessage(message, commands, getJoke())", "description": "tell you a joke", "hide": False, "nsfw": False},
-#         "hentai": {"cmd": "hentai(message, commands)", "description": "Give you hentai picture", "hide": True, "nsfw": True},
-#         "sel": {"cmd": "SendMessage(message, commands, '', '/home/ethann/gideon/image/salt.jpg')", "description": "Give you salt picture", "hide": False, "nsfw": False},
-#         "disquette": {"cmd": "SendMessage(message, commands, '', '/home/ethann/gideon/image/disquette.png')", "description": "Give you disquette", "hide": False, "nsfw": False}
+#         "help":{"cmd": "help(message, commands)", "description":"Simple Help page", "hide":false, "nsfw": false},
+#         "salut":{"cmd": "SendMessage(message, commands, 'Hello there')", "description":"Say hello", "hide":false, "nsfw": false},
+#         "pileFace":{"cmd": "SendMessage(message, commands, '', '/home/ethann/gideon/image/'+['face','pile'][random.randint(0,1)]+'.png')", "description":"Simple Pile Ou Face", "hide":false, "nsfw": false},
+#         "play": {"cmd": "play(message, commands)", "description": "play Music", "hide": false, "nsfw": false},
+#         "skip": {"cmd": "skip(message, commands)", "description": "skip Music", "hide": false, "nsfw": false},
+#         "stop": {"cmd": "stop(message, commands)", "description": "stop Music", "hide": false, "nsfw": false},
+#         "pi": {"cmd": "SendMessage(message, commands, 'π = **3.1415926535897932384626433832795028841971693993751058209749445923**')", "description": "tell you pi Number", "hide": false, "nsfw": false},
+#         "joke": {"cmd": "SendMessage(message, commands, getJoke())", "description": "tell you a joke", "hide": false, "nsfw": false},
+#         "hentai": {"cmd": "SendMessage(message, commands, '', '/home/ethann/gideon/image/hentai/')", "description": "Give you hentai picture", "hide": true, "nsfw": true},
+#         "sel": {"cmd": "SendMessage(message, commands, '', '/home/ethann/gideon/image/salt.jpg')", "description": "Give you salt picture", "hide": false, "nsfw": false},
+#         "disquette": {"cmd": "SendMessage(message, commands, '', '/home/ethann/gideon/image/disquette.png')", "description": "Give you disquette", "hide": false, "nsfw": false}
 # }
 
 root = { # Root people

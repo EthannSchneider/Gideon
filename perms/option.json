@@ -7,7 +7,7 @@
         "stop": {"cmd": "stop(message, commands)", "description": "stop Music", "hide": false, "nsfw": false},
         "pi": {"cmd": "SendMessage(message, commands, 'π = **3.1415926535897932384626433832795028841971693993751058209749445923**')", "description": "tell you pi Number", "hide": false, "nsfw": false},
         "joke": {"cmd": "SendMessage(message, commands, getJoke())", "description": "tell you a joke", "hide": false, "nsfw": false},
-        "hentai": {"cmd": "hentai(message, commands)", "description": "Give you hentai picture", "hide": true, "nsfw": true},
+        "hentai": {"cmd": "SendMessage(message, commands, '', '/home/ethann/gideon/image/hentai/')", "description": "Give you hentai picture", "hide": true, "nsfw": true},
         "sel": {"cmd": "SendMessage(message, commands, '', '/home/ethann/gideon/image/salt.jpg')", "description": "Give you salt picture", "hide": false, "nsfw": false},
         "disquette": {"cmd": "SendMessage(message, commands, '', '/home/ethann/gideon/image/disquette.png')", "description": "Give you disquette", "hide": false, "nsfw": false}
 }
