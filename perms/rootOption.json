@@ -5,5 +5,6 @@
   "ngrok" : {"cmd": "funcngrok(message,commands)", "description": "Demarrer un Client Ngrok !", "hide":false, "nsfw": false },
   "wol" : {"cmd": "wol(message,commands)", "description": "Demarrer EthannGaming avec un wake on lan", "hide":false, "nsfw": false},
   "lock" : {"cmd": "actLock(message,commands)", "description": "Activer la lock pour le non root a l'accés du bot au salon musique", "hide":false, "nsfw": false},
-  "root" : {"cmd": "rootManage(message,commands)", "description": "Manage root account", "hide":false, "nsfw": false}
+  "root" : {"cmd": "rootManage(message,commands)", "description": "Manage root account", "hide":false, "nsfw": false},
+  "GetServer" : {"cmd": "SendMessage(message, commands, str(client.guilds).replace(',', '\\n'))", "description": "Manage root account", "hide":false, "nsfw": false}
 }
