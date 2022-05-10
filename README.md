@@ -1,7 +1,7 @@
 # Gideon
-Gideon is a discord Bot for personnal use
-He can play music (with youtube)
-tell you joke and my other thing
+Gideon is a discord Bot for personnal use <br>
+He can play music (with youtube) <br>
+tell you joke and my other thing <br>
 !help ;)
 
 ## Table of Contents
@@ -25,7 +25,7 @@ tell you joke and my other thing
     - [Date](#date)
 
 ## Link
-https://discord.com/oauth2/authorize?client_id=677983998504468523&scope=bot&permissions=9
+https://discord.com/oauth2/authorize?client_id=677983998504468523&scope=bot&permissions=9 <br>
 To made Gideon join your discord
 
 ## Commands
