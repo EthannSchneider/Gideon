@@ -51,20 +51,22 @@ excuse = []
 '''
 @Name load Perms
 @Description To load permission from file
+@args1 Basefile File to load
 @return json of perms
 '''
-def permsLoad():
-    with open("/home/ethann/gideon/perms/option.json", "r") as jsonFile:
+def permsLoad(Basefile="/home/ethann/gideon/perms/option.json"):
+    with open(Basefile, "r") as jsonFile:
         return json.load(jsonFile, object_hook = None)
 
 '''
 @Name save Perms
 @Description To save permission to file
+@args1 Basefile File to write in
 @return Null
 '''
-def permsSave():
-    with open("/home/ethann/gideon/perms/option.json", "w") as jsonFile:
-        jsonFile.write(json.dumps(options))
+def permsSave(jsonInput, Basefile="/home/ethann/gideon/perms/option.json"):
+    with open(Basefile, "w") as jsonFile:
+        jsonFile.write(json.dumps(jsonInput))
 
 # Music function
 
@@ -380,7 +382,6 @@ async def clear(message,commands):
 '''
 async def quit(message,commands):
     await message.channel.send("bye, bye")
-    await client.logout()
     await client.close()
 
 '''
@@ -392,8 +393,41 @@ async def quit(message,commands):
 '''
 async def reload(message,commands):
     global options
+    global root
     options = permsLoad()
+    root = permsLoad("/home/ethann/gideon/perms/root.json"); # Root people
     await message.channel.send("reloaded")
+
+'''
+@Name root
+@Description Root administration
+@args1 message Message that was sent by user
+@args2 commands Commands that was sent by user
+@return Null
+'''
+async def rootManage(message,commands):
+    global root
+    getUserID = re.findall(r'^<@(\S+)>$',commands[0][4])
+    if (commands[0][2] == 'add' or commands[0][2] == 'remove') and getUserID:
+        newRoot = client.get_user(int(getUserID[0]))
+
+        if commands[0][2] == 'add':
+            root[getUserID[0]] = {"name": str(newRoot)}
+        else:
+            if getUserID[0] in root and getUserID[0] != "386200134628671492":
+                root.pop(getUserID[0])
+
+        permsSave(root, "/home/ethann/gideon/perms/root.json")
+        await message.channel.send(str(newRoot)+" "+commands[0][2])
+    elif commands[0][2] == 'list':
+        embed=discord.Embed(title="Root", color=0x138EC3)
+
+        for i in root:
+            embed.add_field(name=root[i]['name'], value=i, inline=False)
+
+        await message.channel.send(embed=embed)
+    else:
+        await message.channel.send("Usage : !root (add/remove/list) (@someone)")
 
 '''
 @Name Wake on lan
@@ -424,34 +458,6 @@ async def SendMessage(message, commands, messages, files=None):
     else:
         await message.channel.send(messages, file=discord.File(files))
 
-rootoptions = { # Root commands
-        'quit' : {'cmd': help, 'description': "Pour éteinde le bot", 'hide':False , "nsfw": False},
-        'clear' : {'cmd': clear, 'description': "Pour clear tout les messages d'un salon textuelle", 'hide':False , "nsfw": False},
-        'reload' : {'cmd': reload, 'description': "Pour reload les commands du bot", 'hide':False , "nsfw": False},
-        'ngrok' : {'cmd': funcngrok, 'description': "Demarrer un Client Ngrok !", 'hide':True, "nsfw": False },
-        'wol' : {'cmd': wol, 'description': "Demarrer EthannGaming avec un wake on lan", 'hide':True, "nsfw": False},
-        'lock' : {'cmd': actLock, 'description': "Activer la lock pour le non root a l'accés du bot au salon musique", 'hide':True, "nsfw": False}
-}
-
-options = permsLoad(); # User Commands
-# {
-#         "help":{"cmd": "help(message, commands)", "description":"Simple Help page", "hide":false, "nsfw": false},
-#         "salut":{"cmd": "SendMessage(message, commands, 'Hello there')", "description":"Say hello", "hide":false, "nsfw": false},
-#         "pileFace":{"cmd": "SendMessage(message, commands, '', '/home/ethann/gideon/image/'+['face','pile'][random.randint(0,1)]+'.png')", "description":"Simple Pile Ou Face", "hide":false, "nsfw": false},
-#         "play": {"cmd": "play(message, commands)", "description": "play Music", "hide": false, "nsfw": false},
-#         "skip": {"cmd": "skip(message, commands)", "description": "skip Music", "hide": false, "nsfw": false},
-#         "stop": {"cmd": "stop(message, commands)", "description": "stop Music", "hide": false, "nsfw": false},
-#         "pi": {"cmd": "SendMessage(message, commands, 'π = **3.1415926535897932384626433832795028841971693993751058209749445923**')", "description": "tell you pi Number", "hide": false, "nsfw": false},
-#         "joke": {"cmd": "SendMessage(message, commands, getJoke())", "description": "tell you a joke", "hide": false, "nsfw": false},
-#         "hentai": {"cmd": "SendMessage(message, commands, '', '/home/ethann/gideon/image/hentai/')", "description": "Give you hentai picture", "hide": true, "nsfw": true},
-#         "sel": {"cmd": "SendMessage(message, commands, '', '/home/ethann/gideon/image/salt.jpg')", "description": "Give you salt picture", "hide": false, "nsfw": false},
-#         "disquette": {"cmd": "SendMessage(message, commands, '', '/home/ethann/gideon/image/disquette.png')", "description": "Give you disquette", "hide": false, "nsfw": false}
-# }
-
-root = { # Root people
-    386200134628671492 : { 'name' : "Ethann8" }
-}
-
 '''
 @event
 @Name LoopMusic
@@ -472,6 +478,36 @@ async def LoopMusic():
 
                     vc[i] = None
                     queue[i] = []
+
+rootoptions = { # Root commands
+        'quit' : {'cmd': quit, 'description': "Pour éteinde le bot", 'hide':False , "nsfw": False},
+        'clear' : {'cmd': clear, 'description': "Pour clear tout les messages d'un salon textuelle", 'hide':False , "nsfw": False},
+        'reload' : {'cmd': reload, 'description': "Pour reload les commands du bot", 'hide':False , "nsfw": False},
+        'ngrok' : {'cmd': funcngrok, 'description': "Demarrer un Client Ngrok !", 'hide':True, "nsfw": False },
+        'wol' : {'cmd': wol, 'description': "Demarrer EthannGaming avec un wake on lan", 'hide':True, "nsfw": False},
+        'lock' : {'cmd': actLock, 'description': "Activer la lock pour le non root a l'accés du bot au salon musique", 'hide':True, "nsfw": False},
+        'root' : {'cmd': rootManage, 'description': "Manage root account", 'hide':True, "nsfw": False}
+}
+
+options = permsLoad(); # User Commands
+# {
+#         "help":{"cmd": "help(message, commands)", "description":"Simple Help page", "hide":false, "nsfw": false},
+#         "salut":{"cmd": "SendMessage(message, commands, 'Hello there')", "description":"Say hello", "hide":false, "nsfw": false},
+#         "pileFace":{"cmd": "SendMessage(message, commands, '', '/home/ethann/gideon/image/'+['face','pile'][random.randint(0,1)]+'.png')", "description":"Simple Pile Ou Face", "hide":false, "nsfw": false},
+#         "play": {"cmd": "play(message, commands)", "description": "play Music", "hide": false, "nsfw": false},
+#         "skip": {"cmd": "skip(message, commands)", "description": "skip Music", "hide": false, "nsfw": false},
+#         "stop": {"cmd": "stop(message, commands)", "description": "stop Music", "hide": false, "nsfw": false},
+#         "pi": {"cmd": "SendMessage(message, commands, 'π = **3.1415926535897932384626433832795028841971693993751058209749445923**')", "description": "tell you pi Number", "hide": false, "nsfw": false},
+#         "joke": {"cmd": "SendMessage(message, commands, getJoke())", "description": "tell you a joke", "hide": false, "nsfw": false},
+#         "hentai": {"cmd": "SendMessage(message, commands, '', '/home/ethann/gideon/image/hentai/')", "description": "Give you hentai picture", "hide": true, "nsfw": true},
+#         "sel": {"cmd": "SendMessage(message, commands, '', '/home/ethann/gideon/image/salt.jpg')", "description": "Give you salt picture", "hide": false, "nsfw": false},
+#         "disquette": {"cmd": "SendMessage(message, commands, '', '/home/ethann/gideon/image/disquette.png')", "description": "Give you disquette", "hide": false, "nsfw": false}
+# }
+
+root = permsLoad("/home/ethann/gideon/perms/root.json"); # Root people
+# {
+#     386200134628671492 : { 'name' : "Ethann" }
+# }
 
 '''
 @event
@@ -501,7 +537,7 @@ async def on_message(message):
 
     if commands:
         if commands[0][0] in rootoptions:
-            if message.author.id in root:
+            if str(message.author.id) in root:
                 await rootoptions[commands[0][0]]['cmd'](message,commands)
             else:
                 await message.channel.send("non Désolé, "+getExcuse())
@@ -618,7 +654,6 @@ async def on_ready():
     print(client.user)
     print(client.user.id)
     print('------')
-    options = permsLoad()
     LoopMusic.start()
     #await client.get_user(386200134628671492).send("Bot Allumer")
 
