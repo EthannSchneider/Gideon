@@ -1,7 +1,7 @@
 # Gideon
 Gideon is a discord Bot for personnal use <br>
 He can play music (with youtube) <br>
-tell you joke and my other thing <br>
+tell you joke and many other thing <br>
 !help ;)
 
 ## Table of Contents
