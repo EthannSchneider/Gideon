@@ -221,7 +221,6 @@ async def stop(message,commands):
             return
 
         if vc[message.guild.id] != None:
-            vc[message.guild.id].stop()
             await vc[message.guild.id].disconnect()
 
             vc[message.guild.id] = None
@@ -476,7 +475,6 @@ async def LoopMusic():
                 if queue[i]:
                     nextMusic(vc[i], i)
                 else:
-                    vc[i].stop()
                     await vc[i].disconnect()
 
                     vc[i] = None
