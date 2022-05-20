@@ -194,7 +194,7 @@ async def play(message,commands):
                     vc[message.guild.id] = await joinChannel(message)
                 fileName = "music/"+get_yt_id(commands[0][2])+".mp3"
                 if not os.path.exists(fileName):
-                    youtubeDwl(commands[0][2])
+                    youtubeDwl("https://www.youtube.com/watch?v="+get_yt_id(commands[0][2]))
                 await message.channel.send(playMusic(fileName, vc[message.guild.id], message.guild.id))
             except Exception as e:
                 await message.channel.send("Erreur technique vérifier que se soit une video téléchargeable ou que vous soyez dans un salon vocaux")
