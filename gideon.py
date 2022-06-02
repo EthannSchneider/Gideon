@@ -172,10 +172,10 @@ def youtubeDwl(ytb):
 @Name Play
 @Description Command play to play music in vocal
 @args1 message message that was sent by user
-@args2 commands commands that was sent by user
+@args2 argument argument of the commands
 @return Null
 '''
-async def play(message,commands):
+async def play(message,argument):
     global vc, queue
     if not isinstance(message.channel, discord.channel.DMChannel):
         if message.guild.id not in lock:
@@ -188,13 +188,13 @@ async def play(message,commands):
             await message.channel.send("non Désolé, "+getExcuse())
             return
 
-        if 'youtu.be' in commands[0][2] or 'youtube.com' in commands[0][2]:
+        if 'youtu.be' in argument[0] or 'youtube.com' in argument[0]:
             try:
                 if vc[message.guild.id] == None:
                     vc[message.guild.id] = await joinChannel(message)
-                fileName = "music/"+get_yt_id(commands[0][2])+".mp3"
+                fileName = "music/"+get_yt_id(argument[0])+".mp3"
                 if not os.path.exists(fileName):
-                    youtubeDwl("https://www.youtube.com/watch?v="+get_yt_id(commands[0][2]))
+                    youtubeDwl("https://www.youtube.com/watch?v="+get_yt_id(argument[0]))
                 await message.channel.send(playMusic(fileName, vc[message.guild.id], message.guild.id))
             except Exception as e:
                 await message.channel.send("Erreur technique vérifier que se soit une video téléchargeable ou que vous soyez dans un salon vocaux")
@@ -206,10 +206,10 @@ async def play(message,commands):
 @Name Stop
 @Description Command stop to stop music in vocal
 @args1 message Message that was sent by user
-@args2 commands Commands that was sent by user
+@args2 argument argument of the commands
 @return Null
 '''
-async def stop(message,commands):
+async def stop(message,argument):
     global vc, queue
 
     if not isinstance(message.channel, discord.channel.DMChannel):
@@ -234,10 +234,10 @@ async def stop(message,commands):
 @Name Skip
 @Description Command to Skip current music with one in the queue
 @args1 message message that was sent by user
-@args2 commands commands that was sent by user
+@args2 argument argument of the commands
 @return Null
 '''
-async def skip(message,commands):
+async def skip(message,argument):
     global vc, queue
     if not isinstance(message.channel, discord.channel.DMChannel):
         if message.guild.id not in lock:
@@ -265,10 +265,10 @@ async def skip(message,commands):
 @Name active Lock
 @Description Active lock to made stop user that use the vocal command in the server only authorize root to use it
 @args1 message Message that was sent by user
-@args2 commands Commands that was sent by user
+@args2 argument argument of the commands
 @return Null
 '''
-async def actLock(message,commands):
+async def actLock(message,argument):
     global lock
 
     if not isinstance(message.channel, discord.channel.DMChannel):
@@ -313,19 +313,18 @@ def getExcuse():
 @Name Help
 @Description Help page to help you ;)
 @args1 message Message that was sent by user
-@args2 commands Commands that was sent by user
+@args2 argument argument of the commands
 @return Null
 '''
-async def help(message,commands):
+async def help(message,argument):
     embed = None;
 
-    if commands[0][2] in options and not options[commands[0][2]]['hide']:
-        embed=discord.Embed(title="!"+commands[0][2], description=options[commands[0][2]]['description'], color=0x138EC3)
+    if argument[0] in options and not options[argument[0]]['hide']:
+        embed=discord.Embed(title="!"+argument[0], description=options[argument[0]]['description'], color=0x138EC3)
 
-    elif commands[0][2] in rootoptions:
+    elif argument[0] in rootoptions:
         if message.author.id in root:
-            embed=discord.Embed(title="!"+commands[0][2], description=rootoptions[commands[0][2]]['description'], color=0x138EC3)
-
+            embed=discord.Embed(title="!"+argument[0], description=rootoptions[argument[0]]['description'], color=0x138EC3)
     else:
         embed=discord.Embed(title="List Command Help", color=0x138EC3)
 
@@ -339,17 +338,17 @@ async def help(message,commands):
 @Name Ngrok
 @Description command to start and stop Ngrok instance
 @args1 message Message that was sent by user
-@args2 commands Commands that was sent by user
+@args2 argument argument of the commands
 @return Null
 '''
-async def funcngrok(message,commands):
+async def funcngrok(message,argument):
     osreturn = os.popen("screen -list")
-    if commands[0][2] == 'stop':
+    if argument[0] == 'stop':
         os.popen("screen -S ngrok -X stuff $'\003'").read()
         await message.channel.send("Client NGROK arrêté !")
         return
     elif 'ngrok' not in osreturn.read():
-        if commands[0][2] == 'minecraft':
+        if argument[0] == 'minecraft':
             os.popen("screen -S ngrok -d -m /home/ethann/.local/bin/ngrok tcp 25565 -region eu").read()
             await message.channel.send("Client NGROK démarré.(Minecraft)")
         else:
@@ -365,10 +364,10 @@ async def funcngrok(message,commands):
 @Name Clear
 @Description Clear channel if not in DMChannel
 @args1 message Message that was sent by user
-@args2 commands Commands that was sent by user
+@args2 argument argument of the commands
 @return Null
 '''
-async def clear(message,commands):
+async def clear(message,argument):
     if not isinstance(message.channel, discord.channel.DMChannel):
         await message.channel.purge()
 
@@ -376,21 +375,42 @@ async def clear(message,commands):
 @Name quit
 @Description Made bot disconnect and close everything
 @args1 message Message that was sent by user
-@args2 commands Commands that was sent by user
+@args2 argument argument of the commands
 @return Null
 '''
-async def quit(message,commands):
+async def quit(message,argument):
     await message.channel.send("bye, bye")
     await client.close()
+
+'''
+@Name broadcast
+@Description Made bot disconnect and close everything
+@args1 message Message that was sent by user
+@args2 argument argument of the commands
+@return Null
+'''
+async def broadcast(message,argument):
+
+    message = ""
+    channel = None
+    for i in argument[1:]:
+        message+=str(i)+" "
+
+    if argument[0].isnumeric():
+        channel = client.get_channel(int(argument[0]))
+
+    if channel != None:
+        await channel.send(message)
+
 
 '''
 @Name reload
 @Description Made bot reload command
 @args1 message Message that was sent by user
-@args2 commands Commands that was sent by user
+@args2 argument argument of the commands
 @return Null
 '''
-async def reload(message,commands):
+async def reload(message,argument):
     global options
     global root
     global rootoptions
@@ -404,24 +424,24 @@ async def reload(message,commands):
 @Name root
 @Description Root administration
 @args1 message Message that was sent by user
-@args2 commands Commands that was sent by user
+@args2 argument argument of the commands
 @return Null
 '''
-async def rootManage(message,commands):
+async def rootManage(message,argument):
     global root
-    getUserID = re.findall(r'^<@(\S+)>$',commands[0][4])
-    if (commands[0][2] == 'add' or commands[0][2] == 'remove') and getUserID:
+    getUserID = re.findall(r'^<@(\S+)>$',argument[1])
+    if (argument[0] == 'add' or argument[0] == 'remove') and getUserID:
         newRoot = client.get_user(int(getUserID[0]))
 
-        if commands[0][2] == 'add':
+        if argument[0] == 'add':
             root[getUserID[0]] = {"name": str(newRoot)}
         else:
             if getUserID[0] in root and getUserID[0] != "386200134628671492":
                 root.pop(getUserID[0])
 
         permsSave(root, "perms/root.json")
-        await message.channel.send(str(newRoot)+" "+commands[0][2])
-    elif commands[0][2] == 'list':
+        await message.channel.send(str(newRoot)+" "+argument[0])
+    elif argument[0] == 'list':
         embed=discord.Embed(title="Root", color=0x138EC3)
 
         for i in root:
@@ -435,10 +455,10 @@ async def rootManage(message,commands):
 @Name Wake on lan
 @Description Start EthannGaming pc
 @args1 message Message that was sent by user
-@args2 commands Commands that was sent by user
+@args2 argument argument of the commands
 @return Null
 '''
-async def wol(message, commands):
+async def wol(message, argument):
     os.popen("wakeonlan 34:97:F6:25:AC:E4").read()
     await message.channel.send("VERY GOOD MY FRIEND YOU START YOUR COMPUTER BY USING DISCORD ARE YOU HAPPY !!!!!")
 
@@ -446,12 +466,12 @@ async def wol(message, commands):
 @Name SendMessage
 @Description Send a message with or without a file
 @args1 message Message that was sent by user
-@args2 commands Commands that was sent by user
+@args2 argument argument of the commands
 @args3 messages Message to send
 @args4 files=Null File to send
 @return Null
 '''
-async def SendMessage(message, commands, messages, files=None):
+async def SendMessage(message, argument, messages, files=None):
     if files == None:
         await message.channel.send(messages)
     if os.path.isdir(files):
@@ -535,9 +555,11 @@ async def on_message(message):
         await message.channel.send(calc)
     #end calc
 
-    commands=re.findall(r'^!(\S+)(\s+(\S+))?(\s+(\S+))?$',message.content)
-
+    commands=re.findall(r'^!(\S+)((\s+(\S+))?)+$',message.content)
     if commands:
+        argument = re.split(' |\n',message.content[len(commands[0][0])+2:])
+        for i in range(1,10):
+            argument.append("")
         if commands[0][0] in rootoptions:
             if str(message.author.id) in root:
                 await eval(rootoptions[commands[0][0]]['cmd'])
