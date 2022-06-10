@@ -432,15 +432,17 @@ async def rootManage(message,argument):
     getUserID = re.findall(r'^<@(\S+)>$',argument[1])
     if (argument[0] == 'add' or argument[0] == 'remove') and getUserID:
         newRoot = client.get_user(int(getUserID[0]))
+        if newRoot != None:
+            if argument[0] == 'add':
+                root[getUserID[0]] = {"name": str(newRoot)}
+            else:
+                if getUserID[0] in root and getUserID[0] != "386200134628671492":
+                    root.pop(getUserID[0])
 
-        if argument[0] == 'add':
-            root[getUserID[0]] = {"name": str(newRoot)}
+            permsSave(root, "perms/root.json")
+            await message.channel.send(str(newRoot)+" "+argument[0])
         else:
-            if getUserID[0] in root and getUserID[0] != "386200134628671492":
-                root.pop(getUserID[0])
-
-        permsSave(root, "perms/root.json")
-        await message.channel.send(str(newRoot)+" "+argument[0])
+            await message.channel.send("Please use a real user")
     elif argument[0] == 'list':
         embed=discord.Embed(title="Root", color=0x138EC3)
 
