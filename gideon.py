@@ -25,6 +25,8 @@ from urllib.parse import urlparse, parse_qs
 from contextlib import suppress
 from discord.ext import tasks
 import json
+import asyncio
+from youtube_search import YoutubeSearch
 
 lock = {}
 
@@ -85,38 +87,55 @@ def joinChannel(message):
 @args1 path Path To File
 @args2 voc Vocal where to play
 @args3 id server id
-@return text to send in chat
+@return bool return true if played false if added to queue
 '''
 def playMusic(path, voc, id):
     if not voc.is_playing():
-        voc.play(discord.FFmpegPCMAudio(path))
+        try:
+            voc.play(discord.FFmpegPCMAudio(path), after=lambda e: asyncio.run_coroutine_threadsafe(nextMusicOrQuit(voc, id), client.loop))
+            return True
+        except:
+            vc[message.guild.id] = None
+            return False
 
-        return "playing"
     else:
-        if id not in queue:
-            queue[id] = []
+        return False
 
-        queue[id].insert(0, path)
-        return "Added to queue"
+'''
+@Name next Music Or Quit
+@Description play next music in queue or quit
+@args1 voc Vocal where to play
+@args2 id server id
+@return text to send in chat
+'''
+async def nextMusicOrQuit(voc, id):
+    if not voc.is_playing():
+        if not nextMusic(voc, id):
+            await voc.disconnect()
+
+            if id in vc:
+                vc[id] = None
+            if id in queue:
+                queue[message.guild.id] = []
 
 '''
 @Name next Music
 @Description play next music in queue
 @args1 voc Vocal where to play
 @args2 id server id
-@return text to send in chat
+@return bool
 '''
 def nextMusic(voc, id):
-    if id not in queue:
-        queue[id] = []
+    if id in queue:
+        if len(queue[id]) > 0:
+            if voc.is_playing():
+                voc.stop()
 
-    if queue[id]:
-        if voc.is_playing():
-            voc.stop()
+            playMusic(queue[id].pop(), voc, id)
 
-        return playMusic(queue[id].pop(), voc, id)
-    else:
-        return "Queue is empty"
+            return True
+        else:
+            return False
 
 '''
 @Name get youtube id
@@ -161,6 +180,7 @@ def youtubeDwl(ytb):
         },
         ],
     }
+
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         ydl.download(ytb)
 
@@ -184,23 +204,33 @@ async def play(message,argument):
         if message.guild.id not in vc:
             vc[message.guild.id] = None
 
-        if lock[message.guild.id] and message.author.id not in root:
+        if lock[message.guild.id] and str(message.author.id) not in root:
             await message.channel.send("non Désolé, "+getExcuse())
             return
 
-        if 'youtu.be' in argument[0] or 'youtube.com' in argument[0]:
-            try:
-                if vc[message.guild.id] == None:
-                    vc[message.guild.id] = await joinChannel(message)
+        try:
+            if 'youtu.be' in argument[0] or 'youtube.com' in argument[0]:
                 fileName = "music/"+get_yt_id(argument[0])+".mp3"
+
                 if not os.path.exists(fileName):
                     youtubeDwl("https://www.youtube.com/watch?v="+get_yt_id(argument[0]))
-                await message.channel.send(playMusic(fileName, vc[message.guild.id], message.guild.id))
-            except Exception as e:
-                await message.channel.send("Erreur technique vérifier que se soit une video téléchargeable ou que vous soyez dans un salon vocaux")
-                print(e)
-        else:
-            await message.channel.send("lien Youtube uniquement (youtube.com, youtu.be)")
+
+                if vc[message.guild.id] == None:
+                    vc[message.guild.id] = await joinChannel(message)
+
+                if playMusic(fileName, vc[message.guild.id], message.guild.id):
+                    await message.channel.send("Playing")
+                else:
+                    if message.guild.id not in queue:
+                        queue[message.guild.id] = []
+                    queue[message.guild.id].insert(0, fileName)
+                    await message.channel.send("Added in queue")
+
+            else:
+                await message.channel.send("lien Youtube uniquement (youtube.com, youtu.be)")
+        except Exception as e:
+            await message.channel.send("Erreur technique vérifier que se soit une video téléchargeable ou que vous soyez dans un salon vocaux")
+            print(e)
 
 '''
 @Name Stop
@@ -223,8 +253,10 @@ async def stop(message,argument):
         if vc[message.guild.id] != None:
             await vc[message.guild.id].disconnect()
 
-            vc[message.guild.id] = None
-            queue[message.guild.id] = []
+            if id in vc:
+                vc[message.guild.id] = None
+            if id in queue:
+                queue[message.guild.id] = []
 
             await message.channel.send("Stopping")
         else:
@@ -255,7 +287,11 @@ async def skip(message,argument):
                 await message.channel.send("non Désolé, "+getExcuse())
                 return
 
-            await message.channel.send(nextMusic(vc[message.guild.id], message.guild.id))
+            if nextMusic(vc[message.guild.id], message.guild.id):
+                await message.channel.send("Playing")
+            else:
+                await message.channel.send("Not in queue")
+
         except Exception as e:
             await message.channel.send("Erreur technique vérifier que se soit une video téléchargeable ou que vous soyez dans un salon vocaux")
             print(e)
@@ -482,26 +518,6 @@ async def SendMessage(message, argument, messages, files=None):
     else:
         await message.channel.send(messages, file=discord.File(files))
 
-'''
-@event
-@Name LoopMusic
-@Description to leave bot when there is no more music
-@return Null
-'''
-@tasks.loop(seconds = 1)
-async def LoopMusic():
-    global vc, queue
-    for i in vc:
-        if vc[i] != None:
-            if not vc[i].is_playing():
-                if queue[i]:
-                    nextMusic(vc[i], i)
-                else:
-                    await vc[i].disconnect()
-
-                    vc[i] = None
-                    queue[i] = []
-
 rootoptions = permsLoad("perms/rootOption.json"); # Root commands
 # {
 #   "quit" : {"cmd": "quit(message,commands)", "description": "Pour éteinde le bot", "hide":false , "nsfw": false},
@@ -680,7 +696,6 @@ async def on_ready():
     print(client.user)
     print(client.user.id)
     print('------')
-    LoopMusic.start()
     #await client.get_user(386200134628671492).send("Bot Allumer")
 
 client.run(TOKEN)
