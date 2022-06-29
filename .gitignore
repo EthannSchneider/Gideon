@@ -4,3 +4,4 @@ log.txt
 music/*
 perms/root.json
 perms/rootOption.json
+musicCachePath

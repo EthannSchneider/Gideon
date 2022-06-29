@@ -97,7 +97,6 @@ def playMusic(path, voc, id):
         except:
             vc[message.guild.id] = None
             return False
-
     else:
         return False
 
@@ -164,15 +163,15 @@ def get_yt_id(url, ignore_playlist=False):
         if query.path[:3] == '/v/': return query.path.split('/')[2]
 
 '''
-@Name youtube Dowload
+@Name youtube Download
 @Description Dowload Video with link
 @args1 ytb Link
 @return Null
 '''
-def youtubeDwl(ytb):
+def youtubeDwl(ytb, cachePath="music"):
     ydl_opts = {
         'format': 'bestaudio/best',
-        'outtmpl': 'music/%(id)s.%(ext)s',
+        'outtmpl': cachePath+'/%(id)s.%(ext)s',
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'mp3',
@@ -183,6 +182,22 @@ def youtubeDwl(ytb):
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         ydl.download(ytb)
+
+'''
+@Name search Youtube
+@Description return youtube id of the search
+@args1 str search string
+@return str of the youtube id
+'''
+def searchYoutube(searched):
+    return YoutubeSearch(searched, max_results=1).to_dict()[0]["id"]
+
+def musicCachePath():
+    try:
+        with open("musicCachePath", "r") as f:
+            return str(f.readlines(0)[0].replace("\n", ""))
+    except Exception as e:
+        return "music"
 
 # Music function
 
@@ -209,25 +224,36 @@ async def play(message,argument):
             return
 
         try:
+            SearchedMusic = ""
+            fileName = ""
+            ytId = ""
+            cachePath = musicCachePath()
             if 'youtu.be' in argument[0] or 'youtube.com' in argument[0]:
-                fileName = "music/"+get_yt_id(argument[0])+".mp3"
-
-                if not os.path.exists(fileName):
-                    youtubeDwl("https://www.youtube.com/watch?v="+get_yt_id(argument[0]))
-
-                if vc[message.guild.id] == None:
-                    vc[message.guild.id] = await joinChannel(message)
-
-                if playMusic(fileName, vc[message.guild.id], message.guild.id):
-                    await message.channel.send("Playing")
-                else:
-                    if message.guild.id not in queue:
-                        queue[message.guild.id] = []
-                    queue[message.guild.id].insert(0, fileName)
-                    await message.channel.send("Added in queue")
-
+                fileName = cachePath+"/"+get_yt_id(argument[0])+".mp3"
+                ytId = argument[0]
             else:
-                await message.channel.send("lien Youtube uniquement (youtube.com, youtu.be)")
+                for arg in argument:
+                    SearchedMusic = SearchedMusic + " " + arg
+                if SearchedMusic.replace(" ", "") == "":
+                    SearchedMusic = "Wejdene annissa"
+                ytId = searchYoutube(SearchedMusic)
+                fileName = cachePath+"/"+str(ytId)+".mp3"
+
+            if not os.path.exists(fileName):
+                if not os.path.exists(cachePath):
+                    os.mkdir(cachePath)
+                youtubeDwl("https://www.youtube.com/watch?v="+str(ytId), cachePath)
+
+            if vc[message.guild.id] == None:
+                vc[message.guild.id] = await joinChannel(message)
+
+            if playMusic(fileName, vc[message.guild.id], message.guild.id):
+                await message.channel.send("Playing")
+            else:
+                if message.guild.id not in queue:
+                    queue[message.guild.id] = []
+                queue[message.guild.id].insert(0, fileName)
+                await message.channel.send("Added in queue")
         except Exception as e:
             await message.channel.send("Erreur technique vérifier que se soit une video téléchargeable ou que vous soyez dans un salon vocaux")
             print(e)
@@ -697,5 +723,6 @@ async def on_ready():
     print(client.user.id)
     print('------')
     #await client.get_user(386200134628671492).send("Bot Allumer")
+    searchYoutube("ethann saga")
 
 client.run(TOKEN)
