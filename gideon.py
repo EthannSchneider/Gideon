@@ -3,8 +3,8 @@
 -----------------------------
  @Name Gideon
  @Author Ethann Schneider
- @Version 2.5
- @Date 10.04.22
+ @Version 2.5.1
+ @Date 3.07.22
 -----------------------------
 '''
 
@@ -144,7 +144,7 @@ def nextMusic(voc, id):
 @args2 ignore_playlist=False If ignore playlist
 @return id of video
 '''
-def get_yt_id(url, ignore_playlist=False):
+def get_yt_id(url, ignore_playlist=True):
     # Examples:
     # - http://youtu.be/SA2iWivDJiE
     # - http://www.youtube.com/watch?v=_oPAwA_Udwc&feature=feedu
@@ -229,8 +229,8 @@ async def play(message,argument):
             ytId = ""
             cachePath = musicCachePath()
             if 'youtu.be' in argument[0] or 'youtube.com' in argument[0]:
-                fileName = cachePath+"/"+get_yt_id(argument[0])+".mp3"
-                ytId = argument[0]
+                ytId = get_yt_id(argument[0])
+                fileName = cachePath+"/"+ytId+".mp3"
             else:
                 for arg in argument:
                     SearchedMusic = SearchedMusic + " " + arg
