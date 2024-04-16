@@ -411,10 +411,10 @@ async def funcngrok(message,argument):
         return
     elif 'ngrok' not in osreturn.read():
         if argument[0] == 'minecraft':
-            os.popen("screen -S ngrok -d -m /home/ethann/.local/bin/ngrok tcp 25565 -region eu").read()
+            os.popen("screen -S ngrok -d -m ngrok tcp 25565").read()
             await message.channel.send("Client NGROK démarré.(Minecraft)")
         else:
-            os.popen("screen -S ngrok -d -m /home/ethann/.local/bin/ngrok tcp 22 -region eu").read()
+            os.popen("screen -S ngrok -d -m ngrok tcp 22").read()
             await message.channel.send("Client NGROK démarré.(ssh)")
     time.sleep(1)
     ngrokreq=urllib.request.urlopen('http://127.0.0.1:4040/api/tunnels')
